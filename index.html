@@ -159,10 +159,13 @@
               <button class="btn btn-info" id="download-timeline-image-btn">Download Timeline as Image</button>
               <button class="btn btn-info" id="download-timeline-pdf-btn">Download Timeline as PDF</button>
             </div>
-            <!-- New Toggle for Task Progress -->
+            <!-- Toggles for Progress & Fit to Frame -->
             <div class="mb-3">
               <input type="checkbox" id="toggle-progress">
               <label for="toggle-progress">Show Progress</label>
+              &nbsp;&nbsp;
+              <input type="checkbox" id="toggle-fit">
+              <label for="toggle-fit">Fit to Frame</label>
             </div>
             <div id="timeline-container"></div>
           </div>
@@ -352,8 +355,10 @@
     // Global data and instance variables
     let projects = [];
     let activeProjectId = null;
-    // Global flag to control Timeline progress visibility
+    let timelineInstance = null;
+    // Global flags for toggling features
     let showTimelineProgress = false;
+    let fitToFrame = false;
 
     // Load data from Local Storage
     function loadData() {
@@ -513,17 +518,18 @@
       const project = projects.find(p => p.id === activeProjectId);
       if (!project) return;
 
-      // Create groups (display task title)
+      // Create groups (showing task title in the header)
       const groups = new vis.DataSet(
         project.tasks.map(t => ({ id: 't_' + t.id, content: t.title }))
       );
-      // Create items with an optional progress bar based on the toggle state
+
+      // Create items with optional progress bar content based on the toggle state
       const items = new vis.DataSet(
         project.tasks.map(t => {
           let progress = t.progress !== undefined ? t.progress : 0;
           let content = showTimelineProgress
             ? `<div style="position: relative; width: 100%; height: 20px; background: #e9ecef;">
-                 <div style="width: ${progress}%; background-color: ${t.color}; height: 100%; opacity:0.8;"></div>
+                 <div style="width: ${progress}%; background-color: ${t.color}; height: 100%; opacity: 0.8;"></div>
                  <div style="position: absolute; top: 0; left: 0; width:100%; text-align: center; font-size: 12px; color: #000;">${progress}%</div>
                </div>`
             : '';
@@ -537,13 +543,23 @@
           };
         })
       );
+
       const options = {
         editable: false,
         margin: { item: 20 },
         zoomable: true,
         stack: false
       };
-      new vis.Timeline(container, items, groups, options);
+
+      // Create timeline instance and store in a global variable
+      timelineInstance = new vis.Timeline(container, items, groups, options);
+      
+      // If "Fit to Frame" is checked, automatically adjust the view to fit all tasks.
+      if (fitToFrame) {
+        timelineInstance.fit();
+      }
+      
+      // Setup range buttons based on the timeline instance
       document.getElementById('set-timeline-range-btn').onclick = () => {
         const start = document.getElementById('timeline-start-date').value;
         const end = document.getElementById('timeline-end-date').value;
@@ -551,10 +567,10 @@
           alert('Please select both start and end dates.');
           return;
         }
-        timeline.setWindow(new Date(start), new Date(end));
+        timelineInstance.setWindow(new Date(start), new Date(end));
       };
       document.getElementById('reset-timeline-range-btn').onclick = () => {
-        timeline.fit();
+        timelineInstance.fit();
       };
     }
 
@@ -567,7 +583,6 @@
         container.innerHTML = '<p>Select a project to view its Gantt chart.</p>';
         return;
       }
-      // Map tasks for the Gantt chart
       const tasks = project.tasks.map(t => ({
         id: t.id,
         name: t.title,
@@ -927,6 +942,12 @@
       // Attach event listener to the "Show Progress" checkbox
       document.getElementById('toggle-progress').addEventListener('change', function() {
         showTimelineProgress = this.checked;
+        renderTimeline();
+      });
+      
+      // Attach event listener to the "Fit to Frame" checkbox
+      document.getElementById('toggle-fit').addEventListener('change', function() {
+        fitToFrame = this.checked;
         renderTimeline();
       });
     }
