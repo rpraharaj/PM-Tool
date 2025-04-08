@@ -1,466 +1,1049 @@
-<!--
-IT Project Milestone Management Tool
-===================================
-How to Run:
-- Simply open this file (index.html) in any modern browser (Chrome, Firefox, Edge).
-- Alternatively, serve via a local static server (e.g., `python3 -m http.server`) and navigate to http://localhost:8000
-- All data is stored in your browser's Local Storage.
-- No backend required.
-
-Libraries Used:
-- Bootstrap 5 (CSS Framework) - https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css
-- vis.js Timeline (Interactive Timeline) - https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.0/vis-timeline-graph2d.min.js
-- Frappe Gantt (Gantt Chart) - https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.0/dist/frappe-gantt.min.js
-- Dragula (Kanban Drag & Drop) - https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js
-- FullCalendar (Calendar View) - https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js
-- SheetJS (Import CSV/Excel) - https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
-- jsPDF (Export PDF) - https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js
-
-Browser Compatibility:
-- Latest versions of Chrome, Firefox, Edge recommended.
-- Safari supported but may have minor quirks.
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>IT Project Milestone Management Tool</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IT Project Management Tool</title>
 
-<!-- Bootstrap CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
 
-<!-- Bootstrap Icons -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
 
-<!-- vis.js Timeline CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.0/vis-timeline-graph2d.min.css" rel="stylesheet"/>
+  <!-- vis.js Timeline CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.0/vis-timeline-graph2d.min.css" rel="stylesheet"/>
 
-<!-- Frappe Gantt CSS -->
-<link href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.0/dist/frappe-gantt.css" rel="stylesheet"/>
+  <!-- Frappe Gantt CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.0/dist/frappe-gantt.css" rel="stylesheet"/>
 
-<!-- Dragula CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" rel="stylesheet"/>
+  <!-- FullCalendar CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.css" rel="stylesheet"/>
 
-<!-- FullCalendar CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.css" rel="stylesheet"/>
-
-<style>
-/* Base layout */
-body {
-  overflow-x: hidden;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  background-color: #f4f6f9;
-}
-
-/* Sidebar */
-#sidebar {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #343a40, #212529);
-  color: #fff;
-  padding-top: 1rem;
-}
-#sidebar h4 {
-  color: #fff;
-}
-#sidebar .nav-link {
-  color: #ccc;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  transition: background 0.3s, color 0.3s;
-}
-#sidebar .nav-link:hover,
-#sidebar .nav-link.active {
-  background-color: #495057;
-  color: #fff;
-}
-
-/* Main content */
-#main-content {
-  padding: 1.5rem;
-}
-
-/* Header */
-h1.mb-4 {
-  font-weight: 600;
-  color: #333;
-}
-
-/* Milestone action buttons */
-#milestone-actions button {
-  margin-right: 0.5rem;
-}
-
-/* Tabs */
-.nav-tabs .nav-link {
-  border: none;
-  color: #555;
-  font-weight: 500;
-}
-.nav-tabs .nav-link.active {
-  background-color: #0d6efd;
-  color: #fff;
-  border-radius: 4px;
-}
-
-/* Content panels */
-.tab-content > .tab-pane {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Kanban Board */
-#kanban-columns {
-  display: flex;
-  width: 100%;
-  gap: 10px;
-}
-
-.kanban-column {
-  flex: 1;
-  min-height: 400px;
-  border-radius: 8px;
-  padding: 0.5rem;
-  background-color: #e9ecef;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
-  transition: background 0.3s;
-  overflow-y: auto;
-}
-.kanban-column h5 {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-.kanban-item {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 6px;
-  cursor: grab;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.kanban-item:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-.task-card {
-  border-left: 4px solid #28a745; /* Green border for tasks */
-}
-.milestone-card {
-  border-left: 4px solid #0d6efd; /* Blue border for milestones */
-}
-
-/* Milestone flags in vis.js timeline */
-.vis-item.milestone-flag {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-  color: #fff;
-  font-weight: bold;
-  border-radius: 4px;
-  padding: 2px 6px;
-}
-
-/* Milestone bars in Gantt */
-.milestone-bar {
-  fill: #0d6efd !important;
-  stroke: #0d6efd !important;
-}
-
-/* Modals */
-.modal-content {
-  border-radius: 8px;
-}
-.modal-header {
-  border-bottom: 1px solid #dee2e6;
-}
-.modal-footer {
-  border-top: 1px solid #dee2e6;
-}
-
-/* Forms */
-.form-control:focus, .form-select:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
-}
-
-/* Buttons */
-.btn {
-  border-radius: 4px;
-  transition: background-color 0.3s, box-shadow 0.3s;
-}
-.btn:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Calendar & Timeline containers */
-#calendar-container, #timeline-container, #gantt-container {
-  min-height: 400px;
-}
-
-#timeline-container {
-  overflow-x: auto;
-  width: 100%;
-  min-width: 800px; /* Ensures horizontal scroll if content exceeds */
-}
-
-/* Responsive tweaks */
-@media (max-width: 768px) {
-  #sidebar {
-    min-height: auto;
-  }
-  .kanban-column {
-    margin-bottom: 1rem;
-  }
-}
-</style>
+  <style>
+    /* Base layout */
+    body {
+      overflow-x: hidden;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: #f4f6f9;
+    }
+    /* Sidebar */
+    #sidebar {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #343a40, #212529);
+      color: #fff;
+      padding-top: 1rem;
+    }
+    #sidebar h4 {
+      color: #fff;
+    }
+    #sidebar .nav-link {
+      color: #ccc;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      transition: background 0.3s, color 0.3s;
+    }
+    #sidebar .nav-link:hover,
+    #sidebar .nav-link.active {
+      background-color: #495057;
+      color: #fff;
+    }
+    /* Main content */
+    #main-content {
+      padding: 1.5rem;
+    }
+    /* Header */
+    h1.mb-4 {
+      font-weight: 600;
+      color: #333;
+    }
+    /* Tabs */
+    .nav-tabs .nav-link {
+      border: none;
+      color: #555;
+      font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+      background-color: #0d6efd;
+      color: #fff;
+      border-radius: 4px;
+    }
+    /* Content panels */
+    .tab-content > .tab-pane {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    /* Timeline container */
+    #timeline-container {
+      overflow-x: auto;
+      width: 100%;
+      min-width: 800px;
+    }
+    /* Calendar & Gantt containers */
+    #calendar-container, #gantt-container {
+      min-height: 400px;
+    }
+    /* Kanban View */
+    #kanban-view {
+      min-height: 400px;
+      padding: 10px;
+      background-color: #f8f9fa;
+    }
+    /* Toast for notifications */
+    .toast-container {
+      z-index: 1055;
+    }
+  </style>
 </head>
-
 <body>
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar -->
-    <nav id="sidebar" class="col-md-2 d-none d-md-block sidebar">
-      <h4 class="text-center">Projects</h4>
-      <ul id="project-list" class="nav flex-column px-2">
-        <!-- Project items injected here -->
-      </ul>
-      <div class="px-2 mt-3">
-        <button class="btn btn-primary w-100 mb-2" id="add-project-btn"><i class="bi bi-plus"></i> Add Project</button>
-        <button class="btn btn-danger w-100" id="reset-data-btn"><i class="bi bi-trash"></i> Reset Data</button>
-      </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main id="main-content" class="col-md-10 ms-sm-auto col-lg-10">
-      <h1 class="mb-4">IT Project Milestone Management</h1>
-
-      <div id="milestone-actions" class="mb-3">
-        <button class="btn btn-success" id="add-milestone-btn"><i class="bi bi-plus"></i> Add Milestone</button>
-        <button class="btn btn-primary" id="add-task-btn"><i class="bi bi-plus-square"></i> Add Task</button>
-      </div>
-
-<!-- Milestone Modal -->
-<div class="modal fade" id="milestoneModal" tabindex="-1" aria-labelledby="milestoneModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form class="modal-content" id="milestone-form">
-      <div class="modal-header">
-        <h5 class="modal-title" id="milestoneModalLabel">Add/Edit Milestone</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label for="milestone-title" class="form-label">Title *</label>
-          <input type="text" class="form-control" id="milestone-title" required />
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <nav id="sidebar" class="col-md-2 d-none d-md-block sidebar">
+        <h4 class="text-center">Projects</h4>
+        <ul id="project-list" class="nav flex-column px-2">
+          <!-- Project items injected here -->
+        </ul>
+        <div class="px-2 mt-3">
+          <button class="btn btn-primary w-100 mb-2" id="add-project-btn">
+            <i class="bi bi-plus"></i> Add Project
+          </button>
+          <button class="btn btn-danger w-100" id="reset-data-btn">
+            <i class="bi bi-trash"></i> Reset Data
+          </button>
         </div>
+      </nav>
+      <!-- Main Content -->
+      <main id="main-content" class="col-md-10 ms-sm-auto col-lg-10">
+        <h1 class="mb-4">IT Project Management</h1>
+        <!-- Task Action -->
         <div class="mb-3">
-          <label for="milestone-description" class="form-label">Description</label>
-          <textarea class="form-control" id="milestone-description"></textarea>
+          <button class="btn btn-primary" id="add-task-btn">
+            <i class="bi bi-plus-square"></i> Add Task
+          </button>
         </div>
-        <div class="mb-3">
-          <label for="milestone-due" class="form-label">Due Date</label>
-          <input type="date" class="form-control" id="milestone-due" />
-        </div>
-        <div class="mb-3">
-          <label for="milestone-status" class="form-label">Status</label>
-          <select class="form-select" id="milestone-status">
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>Completed</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label for="milestone-priority" class="form-label">Priority/Color</label>
-          <input type="color" class="form-control form-control-color" id="milestone-priority" value="#007bff" title="Choose color">
-        </div>
-        <input type="hidden" id="milestone-id" />
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Save Milestone</button>
-        <button type="button" class="btn btn-danger" id="delete-milestone-btn" style="display:none;">Delete</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-      <!-- Navigation Tabs -->
-      <ul class="nav nav-tabs mb-3" id="view-tabs">
-        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#timeline-view">Timeline</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#gantt-view">Gantt Chart</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#kanban-view">Kanban Board</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#calendar-view">Calendar</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#import-export-view">Import/Export</a></li>
-      </ul>
-
-      <div class="tab-content">
-        <div class="tab-pane fade show active" id="timeline-view">
-          <div class="mb-3">
-            <label>Timeline Range:</label>
-            <div class="d-flex flex-wrap gap-2">
-              <input type="date" id="timeline-start-date" class="form-control" style="max-width:200px;">
-              <input type="date" id="timeline-end-date" class="form-control" style="max-width:200px;">
-              <button class="btn btn-primary" id="set-timeline-range-btn">Set Range</button>
-              <button class="btn btn-secondary" id="reset-timeline-range-btn">Reset</button>
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="view-tabs">
+          <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#timeline-view">Timeline</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#gantt-view">Gantt Chart</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#kanban-view">Kanban Board</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#calendar-view">Calendar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#import-export-view">Import/Export</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <!-- Timeline View -->
+          <div class="tab-pane fade show active" id="timeline-view">
+            <div class="mb-3">
+              <label>Timeline Range:</label>
+              <div class="d-flex flex-wrap gap-2">
+                <input type="date" id="timeline-start-date" class="form-control" style="max-width:200px;">
+                <input type="date" id="timeline-end-date" class="form-control" style="max-width:200px;">
+                <button class="btn btn-primary" id="set-timeline-range-btn">Set Range</button>
+                <button class="btn btn-secondary" id="reset-timeline-range-btn">Reset</button>
+              </div>
             </div>
-          </div>
-          <div id="timeline-container"></div>
-        </div>
-        <div class="tab-pane fade" id="gantt-view">
-          <div class="mb-3">
-            <label for="gantt-view-mode">Gantt View Mode:</label>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <select id="gantt-view-mode" class="form-select" style="max-width:200px;">
-                <option value="Day">Daily</option>
-                <option value="Week">Weekly</option>
-                <option value="Month">Monthly</option>
-                <option value="Quarter">Quarterly</option>
-                <option value="Year">Yearly</option>
-              </select>
-              <button class="btn btn-outline-primary btn-sm" id="gantt-zoom-in-btn">Zoom In</button>
-              <button class="btn btn-outline-primary btn-sm" id="gantt-zoom-out-btn">Zoom Out</button>
+            <!-- Download Buttons for Timeline View -->
+            <div class="mb-3">
+              <button class="btn btn-info" id="download-timeline-image-btn">Download Timeline as Image</button>
+              <button class="btn btn-info" id="download-timeline-pdf-btn">Download Timeline as PDF</button>
             </div>
+            <!-- New Toggle for Task Progress -->
+            <div class="mb-3">
+              <input type="checkbox" id="toggle-progress">
+              <label for="toggle-progress">Show Progress</label>
+            </div>
+            <div id="timeline-container"></div>
           </div>
-          <div id="gantt-container"></div>
-        </div>
-        <div class="tab-pane fade" id="kanban-view">
-          <div class="d-flex" id="kanban-columns">
-            <div class="kanban-column" data-status="Backlog"><h5>Backlog</h5></div>
-            <div class="kanban-column" data-status="In Progress"><h5>In Progress</h5></div>
-            <div class="kanban-column" data-status="Completed"><h5>Completed</h5></div>
+          <!-- Gantt View -->
+          <div class="tab-pane fade" id="gantt-view">
+            <div class="mb-3">
+              <label for="gantt-view-mode">Gantt View Mode:</label>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <select id="gantt-view-mode" class="form-select" style="max-width:200px;">
+                  <option value="Day">Daily</option>
+                  <option value="Week">Weekly</option>
+                  <option value="Month">Monthly</option>
+                  <option value="Quarter">Quarterly</option>
+                  <option value="Year">Yearly</option>
+                </select>
+                <button class="btn btn-outline-primary btn-sm" id="gantt-zoom-in-btn">Zoom In</button>
+                <button class="btn btn-outline-primary btn-sm" id="gantt-zoom-out-btn">Zoom Out</button>
+              </div>
+            </div>
+            <!-- Download Buttons for Gantt View -->
+            <div class="mb-3">
+              <button class="btn btn-info" id="download-gantt-image-btn">Download Gantt Chart as Image</button>
+              <button class="btn btn-info" id="download-gantt-pdf-btn">Download Gantt Chart as PDF</button>
+            </div>
+            <div id="gantt-container"></div>
+          </div>
+          <!-- Kanban View -->
+          <div class="tab-pane fade" id="kanban-view">
+            <!-- Kanban board will be rendered here using SortableJS -->
+          </div>
+          <!-- Calendar View -->
+          <div class="tab-pane fade" id="calendar-view">
+            <div id="calendar-container"></div>
+          </div>
+          <!-- Import/Export View -->
+          <div class="tab-pane fade" id="import-export-view">
+            <h4>Import Data</h4>
+            <input type="file" id="import-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+            <button class="btn btn-primary mt-2" id="import-btn"><i class="bi bi-upload"></i> Import</button>
+            <h4 class="mt-4">Export Data</h4>
+            <button class="btn btn-secondary" id="export-csv-btn"><i class="bi bi-download"></i> Export CSV</button>
+            <button class="btn btn-secondary" id="export-pdf-btn"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+            <button class="btn btn-secondary mt-2" id="export-json-btn"><i class="bi bi-filetype-json"></i> Export JSON</button>
+            <h4 class="mt-4">Import JSON</h4>
+            <input type="file" id="import-json-input" accept=".json,application/json" />
+            <button class="btn btn-primary mt-2" id="import-json-btn"><i class="bi bi-upload"></i> Import JSON</button>
           </div>
         </div>
-        <div class="tab-pane fade" id="calendar-view">
-          <div id="calendar-container"></div>
-        </div>
-        <div class="tab-pane fade" id="import-export-view">
-          <h4>Import Data</h4>
-          <input type="file" id="import-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-          <button class="btn btn-primary mt-2" id="import-btn"><i class="bi bi-upload"></i> Import</button>
-          <h4 class="mt-4">Export Data</h4>
-          <button class="btn btn-secondary" id="export-csv-btn"><i class="bi bi-download"></i> Export CSV</button>
-          <button class="btn btn-secondary" id="export-pdf-btn"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
-          <button class="btn btn-secondary mt-2" id="export-json-btn"><i class="bi bi-filetype-json"></i> Export JSON</button>
-
-          <h4 class="mt-4">Import JSON</h4>
-          <input type="file" id="import-json-input" accept=".json,application/json" />
-          <button class="btn btn-primary mt-2" id="import-json-btn"><i class="bi bi-upload"></i> Import JSON</button>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
-</div>
 
-<!-- Project Creation Modal -->
-<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form class="modal-content" id="project-form">
-      <div class="modal-header">
-        <h5 class="modal-title" id="projectModalLabel">Create New Project</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label for="project-name" class="form-label">Project Name *</label>
-          <input type="text" class="form-control" id="project-name" required />
+  <!-- Project Creation Modal -->
+  <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="project-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="projectModalLabel">Create New Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="mb-3">
-          <label for="project-description" class="form-label">Description</label>
-          <textarea class="form-control" id="project-description"></textarea>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="project-name" class="form-label">Project Name *</label>
+            <input type="text" class="form-control" id="project-name" required />
+          </div>
+          <div class="mb-3">
+            <label for="project-description" class="form-label">Description</label>
+            <textarea class="form-control" id="project-description"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="project-team" class="form-label">Team Members (comma separated)</label>
+            <input type="text" class="form-control" id="project-team" />
+          </div>
+          <div class="mb-3">
+            <label for="project-start" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="project-start" />
+          </div>
+          <div class="mb-3">
+            <label for="project-end" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="project-end" />
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="project-team" class="form-label">Team Members (comma separated)</label>
-          <input type="text" class="form-control" id="project-team" />
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Project</button>
         </div>
-        <div class="mb-3">
-          <label for="project-start" class="form-label">Start Date</label>
-          <input type="date" class="form-control" id="project-start" />
-        </div>
-        <div class="mb-3">
-          <label for="project-end" class="form-label">End Date</label>
-          <input type="date" class="form-control" id="project-end" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Save Project</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
-
-<!-- Task Modal -->
-<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form class="modal-content" id="task-form">
-      <div class="modal-header">
-        <h5 class="modal-title" id="taskModalLabel">Add/Edit Task</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label for="task-title" class="form-label">Title *</label>
-          <input type="text" class="form-control" id="task-title" required />
+  <!-- Task Modal -->
+  <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="task-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="taskModalLabel">Add/Edit Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="mb-3">
-          <label for="task-description" class="form-label">Description</label>
-          <textarea class="form-control" id="task-description"></textarea>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="task-title" class="form-label">Title *</label>
+            <input type="text" class="form-control" id="task-title" required />
+          </div>
+          <div class="mb-3">
+            <label for="task-description" class="form-label">Description</label>
+            <textarea class="form-control" id="task-description"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="task-start" class="form-label">Start Date *</label>
+            <input type="date" class="form-control" id="task-start" required />
+          </div>
+          <div class="mb-3">
+            <label for="task-end" class="form-label">End Date *</label>
+            <input type="date" class="form-control" id="task-end" required />
+          </div>
+          <div class="mb-3">
+            <label for="task-status" class="form-label">Status</label>
+            <select class="form-select" id="task-status">
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="task-priority" class="form-label">Priority/Color</label>
+            <input type="color" class="form-control form-control-color" id="task-priority" value="#28a745" title="Choose color">
+          </div>
+          <!-- New Input for Task Progress -->
+          <div class="mb-3">
+            <label for="task-progress" class="form-label">% Complete</label>
+            <input type="number" class="form-control" id="task-progress" min="0" max="100" value="0">
+          </div>
+          <input type="hidden" id="task-id" />
         </div>
-        <div class="mb-3">
-          <label for="task-start" class="form-label">Start Date *</label>
-          <input type="date" class="form-control" id="task-start" required />
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Task</button>
+          <button type="button" class="btn btn-danger" id="delete-task-btn" style="display:none;">Delete</button>
         </div>
-        <div class="mb-3">
-          <label for="task-end" class="form-label">End Date *</label>
-          <input type="date" class="form-control" id="task-end" required />
-        </div>
-        <div class="mb-3">
-          <label for="task-status" class="form-label">Status</label>
-          <select class="form-select" id="task-status">
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>Completed</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label for="task-priority" class="form-label">Priority/Color</label>
-          <input type="color" class="form-control form-control-color" id="task-priority" value="#28a745" title="Choose color">
-        </div>
-        <input type="hidden" id="task-id" />
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Save Task</button>
-        <button type="button" class="btn btn-danger" id="delete-task-btn" style="display:none;">Delete</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
-<!-- Bootstrap Bundle JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+  <!-- Project list item template with action buttons -->
+  <template id="project-list-item-template">
+    <li class="nav-item d-flex align-items-center mb-2">
+      <a href="#" class="nav-link flex-grow-1"></a>
+      <div class="btn-group btn-group-sm ms-2">
+        <button class="btn btn-outline-light edit-project-btn" title="Edit Project">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-outline-danger delete-project-btn" title="Delete Project">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </li>
+  </template>
 
-<!-- vis.js Timeline -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.0/vis-timeline-graph2d.min.js"></script>
+  <!-- Toast for notifications -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <strong class="me-auto" id="toast-title">Notification</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" id="toast-message"></div>
+    </div>
+  </div>
 
-<!-- Frappe Gantt -->
-<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.0/dist/frappe-gantt.min.js"></script>
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+  <!-- vis.js Timeline -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.0/vis-timeline-graph2d.min.js"></script>
+  <!-- Frappe Gantt -->
+  <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.0/dist/frappe-gantt.min.js"></script>
+  <!-- FullCalendar -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas for capturing views -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- SortableJS for Kanban -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
-<!-- Dragula -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
+  <!-- App Script -->
+  <script>
+    // Global data and instance variables
+    let projects = [];
+    let activeProjectId = null;
+    // Global flag to control Timeline progress visibility
+    let showTimelineProgress = false;
 
-<!-- FullCalendar -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+    // Load data from Local Storage
+    function loadData() {
+      const saved = localStorage.getItem('itpm_projects');
+      if (saved) {
+        projects = JSON.parse(saved);
+        projects.forEach(project => {
+          if (project.milestones) delete project.milestones;
+          if (!project.tasks) project.tasks = [];
+        });
+      } else {
+        projects = [];
+      }
+    }
 
-<!-- SheetJS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    // Save data to Local Storage
+    function saveData() {
+      localStorage.setItem('itpm_projects', JSON.stringify(projects));
+    }
 
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    // Generate unique ID
+    function generateId() {
+      return 'id-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
 
-<!-- Our App Scripts (to be created next) -->
-<script src="app.js"></script>
+    // Show notification toast
+    function showToast(title, message, duration = 3000) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-message').textContent = message;
+      const bsToast = new bootstrap.Toast(toast, { delay: duration });
+      bsToast.show();
+    }
 
+    // Render project list in sidebar
+    function renderProjectList() {
+      const list = document.getElementById('project-list');
+      list.innerHTML = '';
+      const template = document.getElementById('project-list-item-template');
+      
+      projects.forEach(project => {
+        const clone = template.content.cloneNode(true);
+        const li = clone.querySelector('li');
+        const a = clone.querySelector('a');
+        
+        a.textContent = project.name;
+        a.className = 'nav-link' + (project.id === activeProjectId ? ' active' : '');
+        a.onclick = () => {
+          activeProjectId = project.id;
+          saveData();
+          renderProjectList();
+          renderAllViews();
+        };
+
+        const editBtn = clone.querySelector('.edit-project-btn');
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          showProjectModal(project);
+        };
+
+        const deleteBtn = clone.querySelector('.delete-project-btn');
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm(`Delete project "${project.name}"?`)) {
+            projects = projects.filter(p => p.id !== project.id);
+            if (activeProjectId === project.id) {
+              activeProjectId = null;
+            }
+            saveData();
+            renderProjectList();
+            renderAllViews();
+            showToast('Success', 'Project deleted successfully');
+          }
+        };
+
+        list.appendChild(clone);
+      });
+    }
+
+    // Show project modal for add/edit
+    function showProjectModal(project = null) {
+      const modal = new bootstrap.Modal(document.getElementById('projectModal'));
+      const form = document.getElementById('project-form');
+      form.reset();
+      
+      document.getElementById('projectModalLabel').textContent = project ? 'Edit Project' : 'Create New Project';
+      
+      if (project) {
+        document.getElementById('project-name').value = project.name;
+        document.getElementById('project-description').value = project.description || '';
+        document.getElementById('project-team').value = project.team ? project.team.join(', ') : '';
+        document.getElementById('project-start').value = project.startDate || '';
+        document.getElementById('project-end').value = project.endDate || '';
+        form.dataset.projectId = project.id;
+      } else {
+        delete form.dataset.projectId;
+      }
+      
+      modal.show();
+    }
+
+    // Handle project form submit
+    function handleProjectFormSubmit(event) {
+      event.preventDefault();
+      const form = event.target;
+      const name = document.getElementById('project-name').value.trim();
+      if (!name) {
+        alert('Project name is required.');
+        return;
+      }
+
+      const projectData = {
+        name,
+        description: document.getElementById('project-description').value.trim(),
+        team: document.getElementById('project-team').value.trim().split(',').map(s => s.trim()).filter(Boolean),
+        startDate: document.getElementById('project-start').value,
+        endDate: document.getElementById('project-end').value,
+        tasks: []
+      };
+
+      if (form.dataset.projectId) {
+        // Edit existing project
+        const project = projects.find(p => p.id === form.dataset.projectId);
+        if (project) {
+          Object.assign(project, projectData);
+          showToast('Success', 'Project updated successfully');
+        }
+      } else {
+        // Create new project
+        projectData.id = generateId();
+        projects.push(projectData);
+        activeProjectId = projectData.id;
+        showToast('Success', 'Project created successfully');
+      }
+
+      saveData();
+      renderProjectList();
+      renderAllViews();
+      bootstrap.Modal.getInstance(document.getElementById('projectModal')).hide();
+    }
+
+    // Reset all data
+    function resetData() {
+      if (confirm('Are you sure you want to clear all projects?')) {
+        localStorage.removeItem('itpm_projects');
+        projects = [];
+        activeProjectId = null;
+        renderProjectList();
+        renderAllViews();
+      }
+    }
+
+    // Timeline view (only tasks)
+    function renderTimeline() {
+      const container = document.getElementById('timeline-container');
+      container.innerHTML = '<p>Select a project to view its timeline.</p>';
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) return;
+
+      // Create groups (display task title)
+      const groups = new vis.DataSet(
+        project.tasks.map(t => ({ id: 't_' + t.id, content: t.title }))
+      );
+      // Create items with an optional progress bar based on the toggle state
+      const items = new vis.DataSet(
+        project.tasks.map(t => {
+          let progress = t.progress !== undefined ? t.progress : 0;
+          let content = showTimelineProgress
+            ? `<div style="position: relative; width: 100%; height: 20px; background: #e9ecef;">
+                 <div style="width: ${progress}%; background-color: ${t.color}; height: 100%; opacity:0.8;"></div>
+                 <div style="position: absolute; top: 0; left: 0; width:100%; text-align: center; font-size: 12px; color: #000;">${progress}%</div>
+               </div>`
+            : '';
+          return {
+            id: t.id,
+            content: content,
+            start: t.startDate,
+            end: t.endDate,
+            group: 't_' + t.id,
+            className: t.status.toLowerCase().replace(' ', '-')
+          };
+        })
+      );
+      const options = {
+        editable: false,
+        margin: { item: 20 },
+        zoomable: true,
+        stack: false
+      };
+      new vis.Timeline(container, items, groups, options);
+      document.getElementById('set-timeline-range-btn').onclick = () => {
+        const start = document.getElementById('timeline-start-date').value;
+        const end = document.getElementById('timeline-end-date').value;
+        if (!start || !end) {
+          alert('Please select both start and end dates.');
+          return;
+        }
+        timeline.setWindow(new Date(start), new Date(end));
+      };
+      document.getElementById('reset-timeline-range-btn').onclick = () => {
+        timeline.fit();
+      };
+    }
+
+    // Gantt Chart view (only tasks)
+    function renderGantt() {
+      const container = document.getElementById('gantt-container');
+      container.innerHTML = '';
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) {
+        container.innerHTML = '<p>Select a project to view its Gantt chart.</p>';
+        return;
+      }
+      // Map tasks for the Gantt chart
+      const tasks = project.tasks.map(t => ({
+        id: t.id,
+        name: t.title,
+        start: t.startDate,
+        end: t.endDate,
+        progress: t.progress !== undefined ? t.progress : 0,
+        dependencies: ''
+      }));
+      const viewModeSelect = document.getElementById('gantt-view-mode');
+      let viewMode = 'Day';
+      if (viewModeSelect) {
+        const selected = viewModeSelect.value;
+        viewMode = (selected === 'Quarter') ? 'Month' : selected;
+      }
+      new Gantt(container, tasks, {
+        view_mode: viewMode,
+        language: 'en',
+        on_date_change: function(task, start, end) {
+          const project = projects.find(p => p.id === activeProjectId);
+          if (project) {
+            const currentTask = project.tasks.find(t => t.id === task.id);
+            if (currentTask) {
+              currentTask.startDate = start.toISOString().split('T')[0];
+              currentTask.endDate = end.toISOString().split('T')[0];
+              saveData();
+              showToast('Success', 'Task dates updated via Gantt chart.');
+              renderAllViews();
+            }
+          }
+        }
+      });
+      if (viewModeSelect && !viewModeSelect._listenerAdded) {
+        viewModeSelect.addEventListener('change', () => { renderGantt(); });
+        const modes = ['Day', 'Week', 'Month', 'Year'];
+        document.getElementById('gantt-zoom-in-btn').onclick = () => {
+          let current = viewModeSelect.value;
+          if (current === 'Quarter') current = 'Month';
+          let idx = modes.indexOf(current);
+          if (idx > 0) {
+            viewModeSelect.value = modes[idx - 1];
+            renderGantt();
+          }
+        };
+        document.getElementById('gantt-zoom-out-btn').onclick = () => {
+          let current = viewModeSelect.value;
+          if (current === 'Quarter') current = 'Month';
+          let idx = modes.indexOf(current);
+          if (idx < modes.length - 1) {
+            viewModeSelect.value = modes[idx + 1];
+            renderGantt();
+          }
+        };
+        viewModeSelect._listenerAdded = true;
+      }
+    }
+
+    // Kanban view using SortableJS
+    function renderKanban() {
+      const kanbanContainer = document.getElementById('kanban-view');
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) {
+        kanbanContainer.innerHTML = "<div class='alert alert-info'>Please select a project to view its Kanban board.</div>";
+        return;
+      }
+      
+      const statuses = [
+        { id: 'not_started', title: 'Not Started' },
+        { id: 'in_progress', title: 'In Progress' },
+        { id: 'completed', title: 'Completed' }
+      ];
+      
+      let html = `<div class="row">`;
+      statuses.forEach(status => {
+        html += `<div class="col-md-4 mb-3">
+                   <div class="card">
+                     <div class="card-header bg-secondary text-white" data-status="${status.id}">
+                       ${status.title}
+                     </div>
+                     <div class="card-body" id="kanban-column-${status.id}" style="min-height:300px;">`;
+        const tasksForStatus = project.tasks.filter(task => {
+          const s = task.status.toLowerCase().replace(/\s+/g, '_');
+          return s === status.id;
+        });
+        tasksForStatus.forEach(task => {
+          html += `<div class="card mb-2 kanban-item" data-task-id="${task.id}" style="cursor:pointer;">
+                     <div class="card-body p-2" style="background-color: ${task.color};">
+                       <h6 class="card-title mb-1">${task.title}</h6>
+                       <p class="card-text small mb-0">${task.startDate} - ${task.endDate}</p>
+                     </div>
+                   </div>`;
+        });
+        html += `   </div>
+                   </div>
+                 </div>`;
+      });
+      html += `</div>`;
+      kanbanContainer.innerHTML = html;
+      
+      statuses.forEach(status => {
+        const columnEl = document.getElementById('kanban-column-' + status.id);
+        if (columnEl) {
+          new Sortable(columnEl, {
+            group: 'kanban',
+            animation: 150,
+            onAdd: function (evt) {
+              const taskId = evt.item.getAttribute('data-task-id');
+              const newStatus = evt.to.parentElement.querySelector('.card-header').getAttribute('data-status');
+              const task = project.tasks.find(t => t.id === taskId);
+              if (task) {
+                if (newStatus === 'not_started') {
+                  task.status = 'Not Started';
+                } else if (newStatus === 'in_progress') {
+                  task.status = 'In Progress';
+                } else if (newStatus === 'completed') {
+                  task.status = 'Completed';
+                }
+                saveData();
+                showToast('Success', `Task "${task.title}" moved to ${task.status}`);
+              }
+            }
+          });
+        }
+      });
+      
+      const items = kanbanContainer.querySelectorAll('.kanban-item');
+      items.forEach(item => {
+        item.addEventListener('click', () => {
+          const taskId = item.getAttribute('data-task-id');
+          const task = project.tasks.find(t => t.id === taskId);
+          if (task) showTaskModal(task);
+        });
+      });
+    }
+
+    // Calendar view using FullCalendar
+    function renderCalendar() {
+      const calendarContainer = document.getElementById('calendar-container');
+      calendarContainer.innerHTML = '';
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) {
+        calendarContainer.innerHTML = '<p>Select a project to view its calendar.</p>';
+        return;
+      }
+      const events = project.tasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        start: t.startDate,
+        end: t.endDate
+      }));
+      
+      const calendar = new FullCalendar.Calendar(calendarContainer, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: events
+      });
+      calendar.render();
+    }
+
+    // Download functions for Timeline View
+    function downloadTimelineAsImage() {
+      const container = document.getElementById('timeline-container');
+      html2canvas(container).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'timeline.png';
+        link.click();
+      });
+    }
+
+    function downloadTimelineAsPDF() {
+      const container = document.getElementById('timeline-container');
+      html2canvas(container).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('timeline.pdf');
+      });
+    }
+
+    // Download functions for Gantt Chart View
+    function downloadGanttAsImage() {
+      const container = document.getElementById('gantt-container');
+      html2canvas(container).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'gantt_chart.png';
+        link.click();
+      });
+    }
+
+    function downloadGanttAsPDF() {
+      const container = document.getElementById('gantt-container');
+      html2canvas(container).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('gantt_chart.pdf');
+      });
+    }
+
+    // Render all views
+    function renderAllViews() {
+      renderTimeline();
+      renderGantt();
+      renderKanban();
+      renderCalendar();
+    }
+
+    // Initialize app and attach event listeners
+    function init() {
+      loadData();
+      renderProjectList();
+      renderAllViews();
+
+      document.getElementById('add-project-btn').onclick = showProjectModal;
+      document.getElementById('reset-data-btn').onclick = resetData;
+      document.getElementById('project-form').onsubmit = handleProjectFormSubmit;
+      document.getElementById('add-task-btn').onclick = () => {
+        if (!activeProjectId) {
+          showToast('Warning', 'Please select a project first');
+          return;
+        }
+        showTaskModal();
+      };
+
+      // Export JSON
+      document.getElementById('export-json-btn').onclick = () => {
+        try {
+          const dataStr = JSON.stringify(projects, null, 2);
+          const blob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'projects.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert('Exported projects as JSON successfully.');
+        } catch (err) {
+          alert('Error exporting JSON: ' + err.message);
+        }
+      };
+
+      // Export CSV (tasks only)
+      document.getElementById('export-csv-btn').onclick = () => {
+        try {
+          let csv = 'Project,Type,Title,Description,Start Date,End Date,Status,Priority\n';
+          projects.forEach(p => {
+            p.tasks.forEach(t => {
+              csv += `"${p.name}","Task","${t.title}","${t.description || ''}","${t.startDate}","${t.endDate}","${t.status}","${t.color || ''}"\n`;
+            });
+          });
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'projects.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert('Exported projects as CSV successfully.');
+        } catch (err) {
+          alert('Error exporting CSV: ' + err.message);
+        }
+      };
+
+      // Export PDF (tasks only)
+      document.getElementById('export-pdf-btn').onclick = () => {
+        try {
+          const doc = new jspdf.jsPDF();
+          let y = 10;
+          projects.forEach(p => {
+            doc.setFontSize(14);
+            doc.text(`Project: ${p.name}`, 10, y);
+            y += 8;
+            doc.setFontSize(12);
+            doc.text('Tasks:', 10, y);
+            y += 6;
+            p.tasks.forEach(t => {
+              doc.text(`- ${t.title} (${t.status}) ${t.startDate} to ${t.endDate}`, 12, y);
+              y += 6;
+              if (y > 280) { doc.addPage(); y = 10; }
+            });
+            y += 10;
+            if (y > 280) { doc.addPage(); y = 10; }
+          });
+          doc.save('projects.pdf');
+          alert('Exported projects as PDF successfully.');
+        } catch (err) {
+          alert('Error exporting PDF: ' + err.message);
+        }
+      };
+
+      // Import JSON
+      document.getElementById('import-json-btn').onclick = () => {
+        const fileInput = document.getElementById('import-json-input');
+        if (!fileInput.files.length) {
+          alert('Please select a JSON file to import.');
+          return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (!Array.isArray(imported)) {
+              alert('Invalid JSON format: expected an array of projects.');
+              return;
+            }
+            imported.forEach(p => {
+              if (!p.id) p.id = generateId();
+              if (!p.tasks) p.tasks = [];
+            });
+            projects = imported;
+            saveData();
+            renderProjectList();
+            renderAllViews();
+            alert('Projects imported successfully.');
+          } catch (err) {
+            alert('Error parsing JSON: ' + err.message);
+          }
+        };
+        reader.onerror = function() {
+          alert('Error reading file.');
+        };
+        reader.readAsText(file);
+      };
+
+      // Import file (for CSV/Excel) – placeholder
+      document.getElementById('import-btn').onclick = () => {
+        alert('Import functionality for CSV/Excel is not implemented in this version.');
+      };
+
+      // Task form submit handler
+      document.getElementById('task-form').onsubmit = handleTaskFormSubmit;
+
+      // Attach download button handlers for Timeline and Gantt views
+      document.getElementById('download-timeline-image-btn').onclick = downloadTimelineAsImage;
+      document.getElementById('download-timeline-pdf-btn').onclick = downloadTimelineAsPDF;
+      document.getElementById('download-gantt-image-btn').onclick = downloadGanttAsImage;
+      document.getElementById('download-gantt-pdf-btn').onclick = downloadGanttAsPDF;
+
+      // Attach event listener to the "Show Progress" checkbox
+      document.getElementById('toggle-progress').addEventListener('change', function() {
+        showTimelineProgress = this.checked;
+        renderTimeline();
+      });
+    }
+
+    window.onload = init;
+
+    // Listen for Bootstrap tab shown events to re-render Kanban and Calendar
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tabEl => {
+      tabEl.addEventListener('shown.bs.tab', event => {
+        const target = event.target.getAttribute("href");
+        if (target === "#kanban-view") {
+          setTimeout(renderKanban, 100);
+        } else if (target === "#calendar-view") {
+          renderCalendar();
+        }
+      });
+    });
+
+    // Show task modal for add or edit
+    function showTaskModal(task = null) {
+      if (!activeProjectId) {
+        showToast('Warning', 'Please select a project first');
+        return;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+      const form = document.getElementById('task-form');
+      form.reset();
+
+      if (!task) {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('task-start').value = today;
+        document.getElementById('task-end').value = today;
+      }
+
+      document.getElementById('task-id').value = task ? task.id : '';
+      document.getElementById('task-title').value = task ? task.title : '';
+      document.getElementById('task-description').value = task ? task.description : '';
+      document.getElementById('task-start').value = task ? task.startDate : '';
+      document.getElementById('task-end').value = task ? task.endDate : '';
+      document.getElementById('task-status').value = task ? task.status : 'Not Started';
+      document.getElementById('task-priority').value = task ? (task.color || '#28a745') : '#28a745';
+      document.getElementById('task-progress').value = task ? (task.progress || 0) : 0;
+
+      const deleteBtn = document.getElementById('delete-task-btn');
+      if (task) {
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.onclick = () => deleteTask(task.id);
+      } else {
+        deleteBtn.style.display = 'none';
+      }
+
+      modal.show();
+    }
+
+    // Handle task form submit
+    function handleTaskFormSubmit(event) {
+      event.preventDefault();
+      
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) {
+        showToast('Error', 'No project selected');
+        return;
+      }
+
+      const taskId = document.getElementById('task-id').value;
+      const title = document.getElementById('task-title').value.trim();
+      const startDate = document.getElementById('task-start').value;
+      const endDate = document.getElementById('task-end').value;
+
+      if (!title || !startDate || !endDate) {
+        showToast('Error', 'Title, Start Date, and End Date are required');
+        return;
+      }
+
+      const progressInput = document.getElementById('task-progress').value;
+      let progress = parseInt(progressInput, 10);
+      if (isNaN(progress) || progress < 0) { progress = 0; }
+      if (progress > 100) { progress = 100; }
+
+      const taskData = {
+        id: taskId || generateId(),
+        title: title,
+        description: document.getElementById('task-description').value.trim(),
+        startDate: startDate,
+        endDate: endDate,
+        status: document.getElementById('task-status').value,
+        color: document.getElementById('task-priority').value,
+        progress: progress
+      };
+
+      if (taskId) {
+        const taskIndex = project.tasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+          project.tasks[taskIndex] = taskData;
+          showToast('Success', 'Task updated successfully');
+        }
+      } else {
+        project.tasks.push(taskData);
+        showToast('Success', 'Task created successfully');
+      }
+
+      saveData();
+      renderAllViews();
+      bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+    }
+
+    // Delete task
+    function deleteTask(id) {
+      const project = projects.find(p => p.id === activeProjectId);
+      if (!project) return;
+      if (!confirm('Delete this task?')) return;
+      project.tasks = project.tasks.filter(t => t.id !== id);
+      saveData();
+      renderAllViews();
+      bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+    }
+  </script>
 </body>
 </html>
